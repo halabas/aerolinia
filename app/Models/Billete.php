@@ -9,6 +9,7 @@ class Billete extends Model
 {
     use HasFactory;
 
+    protected $fillable= ['vuelo_id','user_id','asiento'];
     public function vuelo(){
         return $this->belongsTo(Vuelo::class);
     }

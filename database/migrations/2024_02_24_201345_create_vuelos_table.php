@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('vuelos', function (Blueprint $table) {
             $table->id();
-            $table->string('codigo')->unique();
+            $table->string('codigo_vuelo')->unique();
             $table->foreignId('aeropuerto_salida_id')->constrained('aeropuertos');
             $table->foreignId('aeropuerto_llegada_id')->constrained('aeropuertos');
             $table->timestamp('salida');

@@ -6,7 +6,7 @@ use App\Http\Requests\UpdateBilleteRequest;
 use App\Models\Billete;
 use App\Models\Vuelo;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
 
 class BilleteController extends Controller
 {
@@ -15,7 +15,8 @@ class BilleteController extends Controller
      */
     public function index()
     {
-        //
+        $billetes = DB::table('billetes')->where('user_id',auth()->id())->get();
+        return view('billetes.index',['billetes' =>$billetes]);
     }
 
     /**
@@ -30,7 +31,22 @@ class BilleteController extends Controller
      */
     public function store(Request $request)
     {
-        dump($request);
+        $billete = DB::table('billetes')
+        ->where('user_id', auth()->id())
+        ->where('vuelo_id', $request->vuelo)
+        ->first();
+
+        if($billete==null){
+        Billete::create(['asiento' => $request->asiento,
+                      'vuelo_id' => $request->vuelo,
+                       'user_id' =>auth()->id()]);
+
+        }
+        else{
+            session()->flash('error','Ese usuario ya tiene un billete para este vuelo');
+        }
+        return redirect()->route('vuelos.index');
+
     }
 
     /**
@@ -38,7 +54,9 @@ class BilleteController extends Controller
      */
     public function show(Billete $billete)
     {
-        //
+        $vuelo = Vuelo::find($billete->vuelo_id);
+
+        return view('billetes.show',['billete'=>$billete,'vuelo'=>$vuelo]);
     }
 
     /**
@@ -71,16 +89,29 @@ class BilleteController extends Controller
         $asientosdispo = [];
         $billetes = $vuelo->billetes;
         $ocupados=[];
-        foreach($billetes as $billete){
-            array_push($ocupados,$billete->asiento);
+
+
+        if($vuelo->plazas - $vuelo->billetes->count() <= 0){
+
+            session()->flash('error','Lo siento no quedan asientos para ese vuelo');
         }
 
-        for($i = 1;$i<=$vuelo->plazas;$i++){
-            if(!in_array($i,$ocupados)){
-                array_push($asientosdispo,$i);
+        else{
+
+            foreach($billetes as $billete){
+                array_push($ocupados,$billete->asiento);
             }
-        }
 
-        return view('billetes.create',['vuelo' => $vuelo,'asientosdispo'=>$asientosdispo]);
+            for($i = 1;$i<=$vuelo->plazas;$i++){
+                if(!in_array($i,$ocupados)){
+                    array_push($asientosdispo,$i);
+                }
+            }
+            return view('billetes.create',['vuelo' => $vuelo,'asientosdispo'=>$asientosdispo]);
+
+
+        }
+        return redirect()->route('vuelos.index');
+
     }
 }
